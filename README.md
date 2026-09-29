@@ -261,4 +261,6 @@ See [plugins/devin-orchestrator/README.md](plugins/devin-orchestrator/README.md)
 
 ## License
 
+Based on https://github.com/kingbootoshi/codex-orchestrator by @kingbootoshi
+
 MIT
