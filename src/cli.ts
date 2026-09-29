@@ -50,6 +50,8 @@ Options:
   -m, --model <model>        Model family (default: swe-2)
   -s, --sandbox <mode>       Permissions: read-only, workspace-write, danger-full-access
                              (or native Devin modes: auto, accept-edits, smart, dangerous)
+  --cloud                    Run agent as a Devin Cloud session (its own VM)
+  --mode <mode>              Agent mode: normal, plan, ask (default: normal)
   -w, --wait                 Wait for completion before exiting
   --notify-on-complete <cmd>  Run command when job completes
   -d, --dir <path>           Working directory (default: cwd)
@@ -91,6 +93,8 @@ interface Options {
   model: string;
   sandbox: SandboxMode;
   waitForCompletion: boolean;
+  cloud: boolean;
+  agentMode: string;
   notifyOnComplete: string | null;
   dir: string;
   includeMap: boolean;
@@ -112,6 +116,8 @@ function parseArgs(args: string[]): {
     model: config.model,
     sandbox: config.defaultSandbox,
     waitForCompletion: false,
+    cloud: false,
+    agentMode: config.defaultAgentMode,
     notifyOnComplete: null,
     dir: process.cwd(),
     includeMap: false,
@@ -150,6 +156,18 @@ function parseArgs(args: string[]): {
       } else {
         console.error(`Invalid sandbox mode: ${mode}`);
         console.error(`Valid options: ${config.sandboxModes.join(", ")}`);
+        process.exit(1);
+      }
+    } else if (arg === "--cloud") {
+      options.cloud = true;
+    } else if (arg === "--mode") {
+      const raw = args[++i];
+      const mode = raw === "code" ? "normal" : raw;
+      if ((config.agentModes as readonly string[]).includes(mode)) {
+        options.agentMode = mode;
+      } else {
+        console.error(`Invalid agent mode: ${raw}`);
+        console.error(`Valid options: ${config.agentModes.join(", ")}`);
         process.exit(1);
       }
     } else if (arg === "-w" || arg === "--wait") {
@@ -298,6 +316,8 @@ function printDryRun(context: BuiltPromptContext, options: Options): void {
   console.log(`Model: ${options.model}`);
   console.log(`Reasoning: ${options.reasoning}`);
   console.log(`Sandbox: ${options.sandbox}`);
+  if (options.cloud) console.log("Cloud: yes");
+  if (options.agentMode !== "normal") console.log(`Agent mode: ${options.agentMode}`);
   console.log("Prompt components:");
   for (const component of accounting.components) {
     console.log(
@@ -559,6 +579,28 @@ async function awaitTurn(jobId: string, json: boolean): Promise<void> {
         console.error("Agent hit context window limit");
         process.exit(2);
       }
+
+      // Cloud sessions run on a remote VM: the local Stop hook and ATIF
+      // export never fire, so fall back to the TUI idle marker (which can
+      // sit well above the bottom padding).
+      const cloudJob = loadJob(jobId);
+      const cloudPane = cloudJob?.cloud ? getJobOutput(jobId, 60) : null;
+      if (cloudJob?.cloud && cloudPane?.includes("awaiting instructions")) {
+        const lastLine =
+          cleanTerminalOutput(cloudPane)
+            .split("\n")
+            .map((line) => line.trim())
+            .filter(Boolean)
+            .pop() ?? null;
+        const completedTurn = markSignalTurnComplete(
+          cloudJob,
+          lastLine,
+          new Date().toISOString()
+        );
+        const result = getAwaitTurnResult(completedTurn);
+        printAwaitTurnResult(result, json);
+        process.exit(result.exitCode);
+      }
     }
 
     const current = refreshJobStatus(jobId);
@@ -682,9 +724,11 @@ async function main() {
           sandbox: options.sandbox,
           parentSessionId: options.parentSessionId ?? undefined,
           cwd: options.dir,
+          cloud: options.cloud,
+          agentMode: options.agentMode,
         });
 
-        console.log(`Job started: ${job.id}`);
+        console.log(`Job started: ${job.id}${job.cloud ? " (cloud)" : ""}`);
         console.log(`Model: ${job.model} (${job.reasoningEffort})`);
         console.log(`Working dir: ${job.cwd}`);
         console.log(`tmux session: ${job.tmuxSession}`);
@@ -995,9 +1039,11 @@ async function main() {
             sandbox: options.sandbox,
             parentSessionId: options.parentSessionId ?? undefined,
             cwd: options.dir,
+            cloud: options.cloud,
+            agentMode: options.agentMode,
           });
 
-          console.log(`Job started: ${job.id}`);
+          console.log(`Job started: ${job.id}${job.cloud ? " (cloud)" : ""}`);
           console.log(`tmux session: ${job.tmuxSession}`);
           console.log(`Attach: tmux attach -t ${job.tmuxSession}`);
 

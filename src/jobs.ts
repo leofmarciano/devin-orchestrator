@@ -39,6 +39,8 @@ export interface Job {
   sandbox: SandboxMode;
   parentSessionId?: string;
   devinSessionId?: string;
+  cloud?: boolean;
+  agentMode?: string;
   cwd: string;
   createdAt: string;
   startedAt?: string;
@@ -736,6 +738,8 @@ export interface StartJobOptions {
   sandbox?: SandboxMode;
   parentSessionId?: string;
   cwd?: string;
+  cloud?: boolean;
+  agentMode?: string;
 }
 
 export function startJob(options: StartJobOptions): Job {
@@ -753,6 +757,8 @@ export function startJob(options: StartJobOptions): Job {
     reasoningEffort: options.reasoningEffort || config.defaultReasoningEffort,
     sandbox: options.sandbox || config.defaultSandbox,
     parentSessionId: options.parentSessionId,
+    cloud: options.cloud,
+    agentMode: options.agentMode,
     cwd,
     createdAt: new Date().toISOString(),
     promptEstimatedTokens: options.promptContext?.estimatedTokens,
@@ -774,6 +780,8 @@ export function startJob(options: StartJobOptions): Job {
     reasoningEffort: job.reasoningEffort,
     sandbox: job.sandbox,
     cwd,
+    cloud: job.cloud,
+    agentMode: job.agentMode,
   });
 
   if (result.success) {

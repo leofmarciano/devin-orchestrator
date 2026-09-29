@@ -205,11 +205,13 @@ export function buildDevinArgs(options: {
   sandbox: string;
   configFile: string;
   exportFile: string;
+  cloud?: boolean;
 }): string {
   const model = resolveDevinModel(options.model, options.reasoningEffort);
   const permissionMode = resolvePermissionMode(options.sandbox);
 
   return [
+    ...(options.cloud ? [`--cloud`] : []),
     `--model`,
     shellQuote(model),
     `--permission-mode`,
@@ -291,6 +293,8 @@ export function createSession(options: {
   reasoningEffort: string;
   sandbox: string;
   cwd: string;
+  cloud?: boolean;
+  agentMode?: string;
 }): { sessionName: string; success: boolean; error?: string } {
   const sessionName = getSessionName(options.jobId);
   const logFile = `${config.jobsDir}/${options.jobId}.log`;
@@ -317,6 +321,7 @@ export function createSession(options: {
       sandbox: options.sandbox,
       configFile,
       exportFile: atifFile,
+      cloud: options.cloud,
     });
 
     const indexFile = `${config.jobsDir}/index.json`;
@@ -383,7 +388,11 @@ export function createSession(options: {
     const envScrub = DEVIN_SESSION_ENV_VARS.map((name) => `-u ${name}`).join(" ");
     const isLinux = process.platform === "linux";
     const devinBin = resolveDevinBin();
-    const devinCmd = `env ${envScrub} ${shellQuote(devinBin)} ${devinArgs} -- "$(cat ${shellQuote(promptFile)})"`;
+    // For plan/ask agent-modes the session must boot without the argv prompt
+    // so the mode slash command can run before the first message.
+    const agentMode = options.agentMode && options.agentMode !== "normal" ? options.agentMode : null;
+    const promptArgv = agentMode ? "" : ` -- "$(cat ${shellQuote(promptFile)})"`;
+    const devinCmd = `env ${envScrub} ${shellQuote(devinBin)} ${devinArgs}${promptArgv}`;
     const shellCmd = isLinux
       ? `script -q -e -c ${shellQuote(devinCmd)} ${shellQuote(logFile)}; ${completionHook}`
       : `script -q ${shellQuote(logFile)} ${devinCmd}; ${completionHook}`;
@@ -395,6 +404,32 @@ export function createSession(options: {
     );
     if (tmuxResult.status !== 0) {
       throw new Error((tmuxResult.stderr || tmuxResult.stdout).toString() || "tmux new-session failed");
+    }
+
+    if (agentMode) {
+      // Slash commands cannot be passed via argv: wait for the TUI to be
+      // ready, switch agent-mode, then deliver the prompt via send-keys
+      // (two Enters — the first completes the slash autocomplete).
+      const escapedPrompt = options.prompt.replace(/'/g, "'\\''");
+      const session = shellQuote(sessionName);
+      const injector =
+        `for i in $(seq 1 90); do` +
+        ` tmux capture-pane -t ${session} -p 2>/dev/null | grep -q 'Ask Devin' && break;` +
+        ` tmux has-session -t ${session} 2>/dev/null || exit 0;` +
+        ` sleep 1;` +
+        ` done;` +
+        ` tmux send-keys -t ${session} -l '/${agentMode}';` +
+        ` tmux send-keys -t ${session} Enter;` +
+        ` sleep 1.5;` +
+        ` tmux send-keys -t ${session} Enter;` +
+        ` sleep 1;` +
+        ` tmux send-keys -t ${session} -l '${escapedPrompt}';` +
+        ` tmux send-keys -t ${session} Enter;` +
+        ` sleep 1.5;` +
+        ` tmux send-keys -t ${session} Enter`;
+      spawnSync("bash", ["-c", `( ${injector} ) </dev/null >/dev/null 2>&1 &`], {
+        stdio: "ignore",
+      });
     }
 
     return { sessionName, success: true };

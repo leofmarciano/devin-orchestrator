@@ -36,6 +36,9 @@ const CHROME_ONLY_LINE_PATTERNS: RegExp[] = [
   // Bare prompt chevron / box borders left after stripping
   /^[-\u2500\s]*\([^()]*\)\s*[-\u2500]*$/,
   /^\s*Guide Devin while it works\s*$/i,
+  /^\s*(?:[-●\u25CF\u2022]\s*)?Devin is awaiting instructions\s*$/i,
+  /^\s*Cloud\s*·/i,
+  /^[-\u2500\u2501]{5,}\s+\S/,
   /rate a response/i,
   /^[\u276F\u276D]+\s*$/,
   /^[\u2500\u2502\u250C\u2510\u2514\u2518\u256D\u256E\u2570\u256F\s]*$/,

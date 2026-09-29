@@ -18,6 +18,10 @@ export const config = {
     "dangerous",
   ] as const,
   defaultSandbox: "workspace-write" as const,
+  // Devin agent-modes (the /plan and /ask slash commands; "normal" is the
+  // default Universal agent). Distinct from permission modes.
+  agentModes: ["normal", "plan", "ask"] as const,
+  defaultAgentMode: "normal" as const,
   jobsDir: `${process.env.HOME}/.devin-agent/jobs`,
   jobsIndexFile: `${process.env.HOME}/.devin-agent/jobs/index.json`,
   defaultTimeout: 60,
@@ -27,3 +31,4 @@ export const config = {
 
 export type ReasoningEffort = (typeof config.reasoningEfforts)[number];
 export type SandboxMode = (typeof config.sandboxModes)[number];
+export type AgentMode = (typeof config.agentModes)[number];

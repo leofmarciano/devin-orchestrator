@@ -142,6 +142,8 @@ devin-agent send <jobId> "Focus on the authentication module instead"
 |--------|-------------|
 | `-r, --reasoning <level>` | Reasoning effort: `low`, `medium`, `high`, `xhigh` |
 | `-m, --model <model>` | Model family (default: swe-2) |
+| `--cloud` | Run as a Devin Cloud session (agent works on its own VM) |
+| `--mode <mode>` | Devin agent-mode: `normal` (default), `plan`, `ask` |
 | `-w, --wait` | Wait for completion and emit a ping when done |
 | `--notify-on-complete <cmd>` | Shell command to run when the job completes |
 | `-s, --sandbox <mode>` | `read-only`, `workspace-write`, `danger-full-access` |
@@ -152,6 +154,22 @@ devin-agent send <jobId> "Focus on the authentication module instead"
 | `--clean` | Alias for `--strip-ansi` |
 | `--json` | Output JSON (jobs command only) |
 | `--dry-run` | Preview prompt without executing |
+
+### Cloud sessions and agent-modes
+
+```bash
+# Run on a Devin Cloud VM instead of the local agent
+devin-agent start "Fix flaky CI tests" --cloud
+
+# Plan first, or answer questions read-only
+devin-agent start "Design the caching layer" --mode plan
+devin-agent start "How does auth token refresh work?" --mode ask
+```
+
+Notes:
+
+- `--cloud` streams a `devin --cloud` session through tmux, so `capture`, `send`, `attach`, `output`, and `await-turn` all work the same. Cloud agents run on a remote VM, so the local Stop hook and ATIF export never fire: turn completion is detected from the TUI idle marker instead, and token usage in `status --json` is unavailable (context-window stats still come from the log). Killing a cloud job detaches the local view — the cloud session keeps running and can be reopened with `devin --cloud -r <session>`.
+- `--mode plan` / `--mode ask` inject the `/plan` or `/ask` slash command before your prompt (verified against `Switched to Plan mode` / `Switched to Ask mode`). The mode persists for the job's session.
 
 ## Jobs JSON Output
 

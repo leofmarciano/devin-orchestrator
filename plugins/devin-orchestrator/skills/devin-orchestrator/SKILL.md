@@ -252,6 +252,8 @@ Devin agents have a built-in notify hook that fires the instant an agent finishe
 
 When `devin-agent start` spawns an agent, it injects a per-job `Stop` lifecycle hook via `--config <jobId>.devin-config.json`. When the Devin agent finishes a turn, Devin pipes a JSON payload to our hook script's stdin. The script writes a signal file at `~/.devin-agent/jobs/<jobId>.turn-complete`. The `await-turn` command blocks until that file appears.
 
+Cloud jobs (`--cloud`) run on a remote VM where the hook and ATIF export never fire; for those jobs `await-turn` instead polls the pane for the "Devin is awaiting instructions" idle marker. Cloud jobs have no `usage` totals in `status --json` (context-window stats still work), and `kill` only detaches the local view — the cloud session keeps running (`devin --cloud -r <session>` reopens it).
+
 Each job gets its own notify command with its own job ID baked in. 16 agents running in the same directory? No ambiguity - each one's hook writes to its own signal file.
 
 ### The Standard Orchestration Loop
@@ -431,6 +433,8 @@ devin-agent health                 # verify devin + tmux available
 |------|-------|--------|-------------|
 | `--reasoning` | `-r` | low, medium, high, xhigh | Reasoning depth |
 | `--sandbox` | `-s` | read-only, workspace-write, danger-full-access | File access level |
+| `--cloud` | | flag | Run as a Devin Cloud session on its own VM |
+| `--mode` | | normal, plan, ask | Devin agent-mode (injects `/plan` or `/ask` first) |
 | `--map` | | flag | Include docs/CODEBASE_MAP.md |
 | `--dir` | `-d` | path | Working directory |
 | `--model` | `-m` | string | Model override |

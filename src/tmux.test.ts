@@ -44,6 +44,20 @@ describe("devin launch args", () => {
     expect(args).toContain("--model 'swe-2-high'");
   });
 
+  test("cloud flag prepends --cloud to the launch args", () => {
+    const args = buildDevinArgs({
+      model: "swe-2",
+      reasoningEffort: "low",
+      sandbox: "workspace-write",
+      configFile: "/tmp/job.devin-config.json",
+      exportFile: "/tmp/job.atif.json",
+      cloud: true,
+    });
+
+    expect(args).toMatch(/^--cloud /);
+    expect(args).toContain("--model 'swe-2-medium'");
+  });
+
   test("rejects malicious model text before building a shell command", () => {
     expect(() =>
       buildDevinArgs({
