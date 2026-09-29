@@ -1,0 +1,72 @@
+# Agents Log
+
+## Session: [TIMESTAMP]
+Goal: [What we're trying to accomplish]
+PRD: [Path to PRD if exists, or "TBD"]
+Stage: [ideation | research | synthesis | prd | implementation | review | testing]
+
+---
+
+### Spawned: [jobId] - [time]
+Type: [research | implementation | review | testing]
+Prompt: [The prompt sent to the agent]
+Reasoning: [low | medium | high | xhigh]
+Sandbox: [read-only | workspace-write]
+Context: [Any relevant files included with -f]
+
+### Complete: [jobId] - [time]
+Status: [success | failed | partial]
+Findings:
+- [Key finding 1]
+- [Key finding 2]
+Files: [Relevant files identified or modified]
+Recommendations: [If any]
+
+### Synthesis - [time]
+Combined understanding:
+[Summary of combined findings from multiple agents]
+
+Signal (keep):
+- [Valuable insight 1]
+- [Valuable insight 2]
+
+Noise (discard):
+- [Over-engineered suggestion]
+- [Misunderstood context]
+
+Approach:
+1. [Step 1]
+2. [Step 2]
+
+Next: [What to do next]
+
+### PRD Created - [time]
+Path: docs/prds/[name].md
+Status: [draft | ready for review | approved]
+
+### Implementation Started - [time]
+Agent: [jobId]
+PRD: [path]
+Phase: [1 | 2 | etc]
+
+### Review Complete - [time]
+Agent: [jobId]
+Type: [security | quality | simplification]
+Result: [passed | failed with issues]
+Issues:
+- [Issue 1 if any]
+
+### Testing Complete - [time]
+Agent: [jobId]
+Result: [all passing | X failures]
+Coverage: [if applicable]
+
+---
+
+## Context for Next Session
+
+Current stage: [Where we are in the pipeline]
+Running agents: [List job IDs and their purpose]
+Pending work: [What needs to happen next]
+Blockers: [Anything blocking progress]
+Last action: [What was just completed]

@@ -1,0 +1,21 @@
+{
+  "name": "devin-orchestrator-marketplace",
+  "owner": {
+    "name": "leofmarciano",
+    "url": "https://github.com/leofmarciano"
+  },
+  "metadata": {
+    "description": "Delegate tasks to Devin agents via tmux sessions. Designed for Claude Code orchestration.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "devin-orchestrator",
+      "source": "./plugins/devin-orchestrator",
+      "description": "Orchestrate Devin agents from Claude Code. Spawn parallel agents, monitor progress, send follow-up messages, and capture results - all through tmux sessions.",
+      "version": "1.0.0",
+      "category": "developer tools",
+      "keywords": ["devin", "orchestration", "agents", "tmux", "parallel", "delegation"]
+    }
+  ]
+}

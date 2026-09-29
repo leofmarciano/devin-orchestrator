@@ -1,0 +1,8 @@
+{
+  "name": "devin-orchestrator",
+  "description": "Orchestrate Devin agents from Claude Code via tmux sessions",
+  "author": {
+    "name": "Bootoshi",
+    "url": "https://github.com/leofmarciano"
+  }
+}
